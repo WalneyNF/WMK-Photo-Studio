@@ -10,6 +10,8 @@ on:
       - "apps/photocraft/build.rs"
       - "Cargo.toml"
       - "Cargo.lock"
+      - "wmk-tools/**"
+      - "craft-i18n.rev"
 
 permissions:
   contents: read
@@ -33,7 +35,10 @@ jobs:
       - name: Baixar catalogos de idioma
         shell: pwsh
         run: |
-          git clone --depth 1 https://github.com/storytold/craft-i18n.git "$env:RUNNER_TEMP\craft-i18n"
+          git clone https://github.com/storytold/craft-i18n.git "$env:RUNNER_TEMP\craft-i18n"
+          $revision = (Get-Content craft-i18n.rev -Raw).Trim()
+          git -C "$env:RUNNER_TEMP\craft-i18n" checkout --detach $revision
+          if ($LASTEXITCODE -ne 0) { throw "Revisao de traducao indisponivel: $revision" }
           "CRAFT_I18N_DIR=$env:RUNNER_TEMP\craft-i18n" >> $env:GITHUB_ENV
           if (!(Test-Path "$env:RUNNER_TEMP\craft-i18n\locales\pt-br\photocraft.tsv")) { throw "Catalogo pt-BR nao encontrado" }
       - name: Gerar icones WMK a partir da identidade vetorial
@@ -63,10 +68,17 @@ jobs:
           })().catch(e=>{console.error(e);process.exit(1)});
           '@ | Set-Content -Encoding UTF8 wmk-generate-icons.cjs
           node wmk-generate-icons.cjs
+      - name: Testes WMK sem abrir GUI
+        shell: pwsh
+        run: |
+          python -m unittest discover -s wmk-tools -p "test_*.py" -v
       - name: Compilar editor Windows x64
         shell: pwsh
         run: |
           cargo build --locked --release -p photocraft -p photocraft-cli
+          if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar" }
+          & target/release/photocraft-cli.exe --help
+          if ($LASTEXITCODE -ne 0) { throw "CLI nao iniciou" }
       - name: Montar pacote portatil
         shell: pwsh
         run: |
@@ -75,6 +87,8 @@ jobs:
           if (Test-Path target/release/photocraft-cli.exe) { Copy-Item target/release/photocraft-cli.exe dist/WMK-Photo-Studio-CLI.exe }
           Copy-Item README.md,LICENSE-MIT,LICENSE-APACHE,NOTICE,ATTRIBUTION.md dist/
           Copy-Item assets/wmk-brand/wmk-photo-studio.svg dist/
+          Copy-Item -Recurse wmk-tools dist/wmk-tools
+          Copy-Item docs/WMK-LOTE.md dist/GUIA-LOTE.md
           Get-FileHash dist/WMK-Photo-Studio.exe -Algorithm SHA256 | Format-List | Out-File dist/SHA256.txt
           Compress-Archive -Path dist/* -DestinationPath WMK-Photo-Studio-Windows-x64.zip -Force
       - name: Publicar ZIP de estudos
