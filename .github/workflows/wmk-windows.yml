@@ -7,7 +7,12 @@ on:
     paths:
       - ".github/workflows/wmk-windows.yml"
       - "assets/wmk-brand/**"
-      - "apps/photocraft/build.rs"
+      - "apps/photocraft/**"
+      - "crates/ui-egui/src/panels/**"
+      - "crates/ui-egui/src/lib.rs"
+      - "crates/ui-egui/src/os_window.rs"
+      - "apps/photocraft-web/**"
+      - "apps/photocraft-web-boot/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - "wmk-tools/**"
@@ -49,17 +54,19 @@ jobs:
           const sharp = require('sharp');
           const fs = require('fs');
           const dir = 'assets/app-icon';
+          const maskSvg = (size) => Buffer.from('<svg width="'+size+'" height="'+size+'"><rect width="'+size+'" height="'+size+'" rx="'+Math.round(size*0.22)+'" fill="white"/></svg>');
+          const icon = (size) => sharp(svg).extract({left:170,top:90,width:620,height:310}).resize(size,size,{fit:'contain',background:'#06101d'}).png().composite([{input:maskSvg(size),blend:'dest-in'}]).png().toBuffer();
           const svg = fs.readFileSync('assets/wmk-brand/wmk-photo-studio.svg');
           (async () => {
             const sizes = [16,24,32,48,64,128,256,512];
             for (const size of sizes) {
               const path = dir + '/hicolor/' + size + 'x' + size + '/apps/ai.storyteller.photocraft.png';
               fs.mkdirSync(require('path').dirname(path), {recursive:true});
-              await sharp(svg).extract({left:170,top:90,width:620,height:310}).resize(size,size,{fit:'contain',background:'#06101d'}).png().toFile(path);
+              fs.writeFileSync(path, await icon(size));
             }
             await sharp(svg).resize(1024,1024,{fit:'contain',background:'#06101d'}).png().toFile(dir + '/photocraft-1024.png');
             // ICO multiresolucao: cabecalho ICO + imagens PNG.
-            const icons = await Promise.all([16,24,32,48,64,128,256].map(s => sharp(svg).extract({left:170,top:90,width:620,height:310}).resize(s,s,{fit:'contain',background:'#06101d'}).png().toBuffer()));
+            const icons = await Promise.all([16,24,32,48,64,128,256].map(s => icon(s)));
             let offset = 6 + icons.length * 16;
             const header = Buffer.alloc(offset);
             header.writeUInt16LE(1,2); header.writeUInt16LE(icons.length,4);

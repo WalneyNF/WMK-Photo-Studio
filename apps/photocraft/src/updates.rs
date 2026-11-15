@@ -1,7 +1,7 @@
 //! Release checks through `craft-update`, the library every Craft App shares. Only public release
 //! metadata is requested.
 
-use photocraft_engine::updates_cmds::{CheckFn, CheckResult, Release};
+use photocraft_engine::updates_cmds::{CheckFn, CheckResult};
 
 pub fn service() -> CheckFn {
     Box::new(|| {
@@ -34,7 +34,7 @@ pub fn last_update() -> Option<Result<String, String>> {
 }
 
 fn check() -> CheckResult {
-    let http = craft_update::Http::new("PhotoCraft/Update")?;
-    let found = craft_update::check_for_update(&photocraft_ui_egui::UPDATE_APP, &http, photocraft_engine::build_info::VERSION)?;
-    Ok(found.map(|release| Release { version: release.tag.trim_start_matches(['v', 'V']).to_string(), url: release.html_url }))
+    // WMK fork: upstream PhotoCraft downloads must never replace a WMK executable.
+    // Until a WMK-specific, verified update feed is implemented, report no automatic update.
+    Ok(None)
 }

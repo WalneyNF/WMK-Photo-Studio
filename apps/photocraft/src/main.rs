@@ -178,7 +178,7 @@ fn native_options(custom_titlebar: bool) -> eframe::NativeOptions {
     eframe::NativeOptions {
         viewport: viewport
             .with_app_id(APP_ID)
-            .with_title("PhotoCraft")
+            .with_title("WMK Photo Studio")
             .with_inner_size([1440.0, 900.0])
             .with_min_inner_size(photocraft_ui_egui::MIN_WINDOW_SIZE)
             .with_drag_and_drop(true)
@@ -227,7 +227,7 @@ fn at_least_min_size(mut builder: egui::ViewportBuilder) -> egui::ViewportBuilde
 fn attach_log_file(logger: Option<&'static logging::AppLogger>) {
     if let (Some(logger), Some(dir)) = (logger, services::config_dir()) {
         match logger.attach_dir(&dir.join("logs")) {
-            Ok(path) => log::info!("PhotoCraft {}, log file {}", photocraft_engine::build_info::long_version(), path.display()),
+            Ok(path) => log::info!("WMK Photo Studio {}, log file {}", photocraft_engine::build_info::long_version(), path.display()),
             // Standard error only by now (`attach_dir` gave up on the file); unlike `eprintln!`, never panics.
             Err(e) => log::warn!("no log file: {e}"),
         }
@@ -564,7 +564,7 @@ fn main() -> eframe::Result {
     let created_in_callback = app_created.clone();
     let started_sentinel = sentinel.clone();
     let result = eframe::run_native(
-        "PhotoCraft",
+        "WMK Photo Studio",
         options,
         Box::new(move |cc| {
             created_in_callback.store(true, std::sync::atomic::Ordering::Relaxed);
