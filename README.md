@@ -73,6 +73,7 @@ O catálogo **pt-BR já existe** no projeto compartilhado `craft-i18n`. Para esc
 ## Documentação
 
 - [Guia de compilação e identidade WMK](docs/WMK-COMPILACAO.md)
+- [Inventário da migração da marca](docs/WMK-IDENTIDADE.md)
 - [Roadmap original](ROADMAP.md)
 - [Manual de desenvolvimento do projeto base](docs/development.md)
 - [Documentação de localização](docs/localization-parity.md)
