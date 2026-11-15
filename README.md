@@ -22,6 +22,12 @@ O WMK Photo Studio é um fork experimental do **PhotoCraft**, um editor nativo d
 
 Alguns recursos listados são **parciais** na versão alpha. Veja [ROADMAP.md](ROADMAP.md) e [avaliação de compatibilidade](docs/target-app-parity.md).
 
+## Download público para Windows
+
+**[Acessar todas as versões para download (GitHub Releases)](https://github.com/WalneyNF/WMK-Photo-Studio/releases)**
+
+Quando o GitHub Actions concluir uma compilação com sucesso, o arquivo **WMK-Photo-Studio-Windows-x64.zip** será anexado automaticamente a uma versão **prévia (pre-release)** pública. O download não exige login no GitHub. Se ainda não aparecer nenhuma versão, a compilação/publicação ainda não foi concluída com sucesso.
+
 ## Baixar a versão Windows de estudos
 
 Acesse **[Actions → WMK Windows Portable](https://github.com/WalneyNF/WMK-Photo-Studio/actions/workflows/wmk-windows.yml)**. Abra uma execução concluída com sucesso e baixe o artefato **WMK-Photo-Studio-Windows-x64**. Extraia o ZIP e execute `WMK-Photo-Studio.exe`.

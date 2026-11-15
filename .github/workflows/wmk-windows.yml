@@ -14,7 +14,7 @@ on:
       - "craft-i18n.rev"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows-x64:
@@ -89,7 +89,7 @@ jobs:
           Copy-Item assets/wmk-brand/wmk-photo-studio.svg dist/
           Copy-Item -Recurse wmk-tools dist/wmk-tools
           Copy-Item docs/WMK-LOTE.md dist/GUIA-LOTE.md
-          Get-FileHash dist/WMK-Photo-Studio.exe -Algorithm SHA256 | Format-List | Out-File dist/SHA256.txt
+          Get-FileHash dist/WMK-Photo-Studio.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  WMK-Photo-Studio.exe" } | Set-Content -Encoding ascii dist/SHA256.txt
           Compress-Archive -Path dist/* -DestinationPath WMK-Photo-Studio-Windows-x64.zip -Force
       - name: Publicar ZIP de estudos
         uses: actions/upload-artifact@v4
@@ -98,3 +98,27 @@ jobs:
           path: WMK-Photo-Studio-Windows-x64.zip
           retention-days: 30
           if-no-files-found: error
+
+      - name: Publicar versao de testes para download publico
+        if: success()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $shortSha = "${{ github.sha }}".Substring(0, 8)
+          $tag = "wmk-preview-${{ github.run_number }}-$shortSha"
+          @'
+          # WMK Photo Studio — Windows x64 (prévia experimental)
+
+          **Versão de estudos não assinada.** Compilada automaticamente no GitHub Actions.
+
+          - Inclui WMK-Photo-Studio.exe, WMK-Photo-Studio-CLI.exe, documentação em português e licenças.
+          - Descompacte o ZIP antes de executar.
+          - Faça backup dos originais: a base PhotoCraft ainda está em estágio alpha.
+          - Compilação automatizada e teste básico da CLI não equivalem a validação visual completa em Windows 10/11.
+          - Mantenha os avisos originais PhotoCraft / ArtCraft; branding WMK por Walney Moreira Klein.
+
+          Veja o README para limitações e o roadmap.
+          '@ | Set-Content -Encoding utf8 NOTAS-VERSAO.md
+          gh release create $tag "WMK-Photo-Studio-Windows-x64.zip" --repo "${{ github.repository }}" --title "WMK Photo Studio — Prévia Windows #${{ github.run_number }}" --notes-file NOTAS-VERSAO.md --prerelease --target "${{ github.sha }}"
+          if ($LASTEXITCODE -ne 0) { throw "Nao foi possivel publicar a versao no GitHub Releases" }
