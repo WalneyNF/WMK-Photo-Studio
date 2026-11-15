@@ -77,6 +77,12 @@ O catálogo **pt-BR já existe** no projeto compartilhado `craft-i18n`. Para esc
 - [Manual de desenvolvimento do projeto base](docs/development.md)
 - [Documentação de localização](docs/localization-parity.md)
 
+## Identidade visual e compatibilidade
+
+A identidade WMK está aplicada ao título do aplicativo, à barra superior, ao diálogo Sobre, aos links de suporte, à versão Web e aos recursos Windows gerados na compilação. A arte vetorial usada no build é uma adaptação simplificada do conceito aprovado; os arquivos internos do motor continuam com nomes `photocraft-*` para não quebrar API, formatos de arquivo e bibliotecas.
+
+Os avisos e informações sobre o projeto original permanecem obrigatórios; o catálogo de tradução pt-BR não é integral e algumas mensagens técnicas ainda utilizam a nomenclatura original.
+
 ## Créditos e licenças
 
 **Fork/identidade WMK:** Walney Moreira Klein — walneyk@hotmail.com.
