@@ -1,0 +1,86 @@
+name: WMK Windows Portable
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/wmk-windows.yml"
+      - "assets/wmk-brand/**"
+      - "apps/photocraft/build.rs"
+      - "Cargo.toml"
+      - "Cargo.lock"
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-2022
+    timeout-minutes: 180
+    env:
+      CRAFT_I18N_REQUIRED: "1"
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Baixar codigo
+        uses: actions/checkout@v4
+      - name: Preparar Rust 1.95
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+      - name: Baixar catalogos de idioma
+        shell: pwsh
+        run: |
+          git clone --depth 1 https://github.com/storytold/craft-i18n.git "$env:RUNNER_TEMP\craft-i18n"
+          "CRAFT_I18N_DIR=$env:RUNNER_TEMP\craft-i18n" >> $env:GITHUB_ENV
+          if (!(Test-Path "$env:RUNNER_TEMP\craft-i18n\locales\pt-br\photocraft.tsv")) { throw "Catalogo pt-BR nao encontrado" }
+      - name: Gerar icones WMK a partir da identidade vetorial
+        shell: pwsh
+        run: |
+          npm install --no-save --ignore-scripts=false sharp
+          @'
+          const sharp = require('sharp');
+          const fs = require('fs');
+          const dir = 'assets/app-icon';
+          const svg = fs.readFileSync('assets/wmk-brand/wmk-photo-studio.svg');
+          (async () => {
+            const sizes = [16,24,32,48,64,128,256,512];
+            for (const size of sizes) {
+              const path = dir + '/hicolor/' + size + 'x' + size + '/apps/ai.storyteller.photocraft.png';
+              fs.mkdirSync(require('path').dirname(path), {recursive:true});
+              await sharp(svg).extract({left:170,top:90,width:620,height:310}).resize(size,size,{fit:'contain',background:'#06101d'}).png().toFile(path);
+            }
+            await sharp(svg).resize(1024,1024,{fit:'contain',background:'#06101d'}).png().toFile(dir + '/photocraft-1024.png');
+            // ICO multiresolucao: cabecalho ICO + imagens PNG.
+            const icons = await Promise.all([16,24,32,48,64,128,256].map(s => sharp(svg).extract({left:170,top:90,width:620,height:310}).resize(s,s,{fit:'contain',background:'#06101d'}).png().toBuffer()));
+            let offset = 6 + icons.length * 16;
+            const header = Buffer.alloc(offset);
+            header.writeUInt16LE(1,2); header.writeUInt16LE(icons.length,4);
+            icons.forEach((img,i) => {const s=[16,24,32,48,64,128,256][i], p=6+i*16; header[p]=s===256?0:s;header[p+1]=s===256?0:s;header.writeUInt16LE(1,p+4);header.writeUInt16LE(32,p+6);header.writeUInt32LE(img.length,p+8);header.writeUInt32LE(offset,p+12);offset+=img.length;});
+            fs.writeFileSync(dir+'/photocraft.ico',Buffer.concat([header,...icons]));
+          })().catch(e=>{console.error(e);process.exit(1)});
+          '@ | Set-Content -Encoding UTF8 wmk-generate-icons.cjs
+          node wmk-generate-icons.cjs
+      - name: Compilar editor Windows x64
+        shell: pwsh
+        run: |
+          cargo build --locked --release -p photocraft -p photocraft-cli
+      - name: Montar pacote portatil
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item target/release/photocraft.exe dist/WMK-Photo-Studio.exe
+          if (Test-Path target/release/photocraft-cli.exe) { Copy-Item target/release/photocraft-cli.exe dist/WMK-Photo-Studio-CLI.exe }
+          Copy-Item README.md,LICENSE-MIT,LICENSE-APACHE,NOTICE,ATTRIBUTION.md dist/
+          Copy-Item assets/wmk-brand/wmk-photo-studio.svg dist/
+          Get-FileHash dist/WMK-Photo-Studio.exe -Algorithm SHA256 | Format-List | Out-File dist/SHA256.txt
+          Compress-Archive -Path dist/* -DestinationPath WMK-Photo-Studio-Windows-x64.zip -Force
+      - name: Publicar ZIP de estudos
+        uses: actions/upload-artifact@v4
+        with:
+          name: WMK-Photo-Studio-Windows-x64
+          path: WMK-Photo-Studio-Windows-x64.zip
+          retention-days: 30
+          if-no-files-found: error
