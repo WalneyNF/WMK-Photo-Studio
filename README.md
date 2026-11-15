@@ -47,6 +47,13 @@ O nome do pacote Rust continua `photocraft` para manter a compatibilidade com a 
 
 O catálogo **pt-BR já existe** no projeto compartilhado `craft-i18n`. Para escolher o idioma, acesse as preferências de interface. A tradução ainda não abrange todas as mensagens do motor. O workflow desta distribuição exige o catálogo de tradução durante a compilação.
 
+## Acompanhar o desenvolvimento
+
+- [Roadmap visual HTML](docs/roadmap.html)
+- [Roadmap técnico WMK](docs/WMK-ROADMAP.md)
+- [Manual: fotos em lote sem sobrescrever originais](docs/WMK-LOTE.md)
+- [Código e testes da ferramenta de lote](wmk-tools/)
+
 ## Próximas melhorias
 
 1. Build portátil Windows validado e ícones consistentes no aplicativo.
